@@ -1,10 +1,13 @@
+
+
+
 class SelectFrameScene extends SceneBase{
 	
 	final String[] frame_title={"#1","#2","#3","#4"};
 	final PVector[] frame_position={new PVector(66,1112),new PVector(316,1140),new PVector(566,1101),new PVector(814,1135)};
 
 	int mframe=4;
-	int iselected_frame=-1;
+	
 	Button[] arr_frame_button;
 	Button top_button;
 
@@ -18,7 +21,7 @@ class SelectFrameScene extends SceneBase{
 	};
 	UIMovie v_list_people=new UIMovie(g_papplet,"list_export down people.mov",true,2,2){
 		void reachEnd(){
-			changeToScene(SceneMode.CONFIRM_FRAME);
+			if(iselected_frame>-1) changeToScene(SceneMode.CONFIRM_FRAME);
 		}
 		@Override
 		void pauseAtLoop(){

@@ -32,7 +32,8 @@ class ConfirmScene extends SceneBase{
 			void Clicked(){
 				continue_button.setEnable(false);
 				reselect_button.setEnable(false);
-		
+				arr_frame_movie[iselected_frame].stop();	
+
 				changeToScene(SceneMode.SELECT_FRAME);
 			}
 		};	
@@ -63,7 +64,9 @@ class ConfirmScene extends SceneBase{
 		v_confirm_button.initPlay();
 		continue_button.setEnable(false);
 		reselect_button.setEnable(false);
-
+		
+		// if(iselected_frame>-1) arr_frame_movie[iselected_frame].initPlay();		
+		if(iselected_frame>-1) arr_frame_movie[0].initPlay();		
 	}
 	void End(){
 		v_confirm_button.stop();
@@ -72,7 +75,12 @@ class ConfirmScene extends SceneBase{
 	void DrawContent(){
 		pg.background(0,0);
 
+		// if(iselected_frame>-1) arr_frame_movie[iselected_frame].drawOnGraph(pg,0,0);
+		if(iselected_frame>-1) arr_frame_movie[0].drawOnGraph(pg,0,0);
+
 		v_confirm_button.drawOnGraph(pg,0,760);
+
+
 	}
 	
 }

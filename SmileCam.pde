@@ -1,10 +1,21 @@
 import oscP5.*;
 import netP5.*;
 import processing.video.*;
-import java.util.HashMap;
 
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
+
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+
 
 
 boolean DEBUG_MODE=true;
@@ -25,8 +36,12 @@ float cur_t_camera_size=.5;
 float dest_t_camera_size=.5;
 
 /* graphic */
-PImage happy_image,unhappy_image;
-PFont font;
+PImage[] smile_image;
+PFont font,score_font;
+PGraphics save_pg,qrcode_pg;
+
+int iselected_frame=-1;
+FrameMovie[] arr_frame_movie;
 
 
 /* scene */
@@ -40,12 +55,17 @@ PApplet g_papplet;
 
 void setup(){
 	size(1080,1920,P3D);
+	// frameRate(30);
+	
 	initNetwork();
 	initCamera();	
 
+	readParameterFile();
+
+	g_papplet=this;
 	initGraphicData();
 	
-	g_papplet=this;
+	
 		
 
 	arr_scene=new SceneBase[mscene];
@@ -58,13 +78,15 @@ void setup(){
 	
 
 	initScene(SceneMode.SLEEP);
-
-
+	// initScene(SceneMode.SMILE_DETECT);
+	// prepareSaveImage((int)random(3),0);
+	// initScene(SceneMode.PREVIEW_PHOTO);
 }
 
 
 void draw(){
 	
+
 
 	background(0);
 	drawCameraView();
@@ -86,6 +108,8 @@ void draw(){
 		popStyle();
 	}
 
+
+	
 }
 
 void drawCameraView(){
@@ -122,7 +146,51 @@ void mousePressed(){
 	arr_scene[cur_scene.getValue()].HandleMousePressed(mouseX,mouseY);
 }
 void keyPressed(){
-	if(key=='a') DEBUG_MODE=!DEBUG_MODE; 
+	if(DEBUG_MODE){
+		if(key==CODED){
+			switch(keyCode){
+				case RIGHT:
+					Kinect_Position.x+=.1;
+					break;
+				case LEFT:
+					Kinect_Position.x-=.1;
+					break;
+				case DOWN:
+					Kinect_Position.y+=.1;
+					break;
+				case UP:
+					Kinect_Position.y-=.1;
+					break;
+			}	
+		}
+	}
+	switch(key){
+		case 'a':
+			DEBUG_MODE=!DEBUG_MODE; 
+			break;
+		case 's':
+			saveParameterFile();
+			break;
+		case 'r':
+			readParameterFile();
+			break;
+
+		
+		case 'z':
+			Kinect_Scale.x+=.1;
+			break;
+		case 'x':
+			Kinect_Scale.x-=.1;
+			break;
+
+		case 'c':
+			Kinect_Scale.y+=.1;
+			break;
+		case 'v':
+			Kinect_Scale.y-=.1;
+			break;
+	}
+			
 }
 
 void initNetwork(){
@@ -135,9 +203,9 @@ void oscEvent(OscMessage message) {
 	if(cur_scene!=SceneMode.SMILE_DETECT) return;
 
 
-	print("### received an osc message.");
-	print(" addrpattern: "+message.addrPattern());
-	println(" typetag: "+message.typetag());
+	// print("### received an osc message.");
+	// print(" addrpattern: "+message.addrPattern());
+	// println(" typetag: "+message.typetag());
 	String addr=message.addrPattern();
 
 	if(!addr.equals("/face")) return;
@@ -173,16 +241,70 @@ void initCamera(){
     capture_cam=new Capture(this, height,width);
     capture_cam.start();     
  	cam_ready=true;
+
 }
 
 
 
 void initGraphicData(){
 
-	happy_image=loadImage("happy.png");
-	unhappy_image=loadImage("unhappy.png");
-
+	smile_image=new PImage[3];
+	smile_image[0]=loadImage("smile1.png");
+	smile_image[1]=loadImage("smile2.png");
+	smile_image[2]=loadImage("smile3.png");
+	
 	
 	font=loadFont("Consolas-14.vlw");
 	textFont(font, 14);
+
+	score_font=loadFont("MyriadPro-BoldCond-60.vlw");
+
+	save_pg=createGraphics(width,height);
+	qrcode_pg=createGraphics(335,335);
+
+	loadFrameMovie();
 }
+
+String createUId(){
+
+	String day_info=nf(year(),4)+nf(month(),2)+nf(day(),2)+"_"+nf(hour(),2)+nf(minute(),2)+nf(second(),2);
+	String uid=UUID.randomUUID().toString();
+
+	return day_info+uid;
+
+}
+void prepareSaveImage(int iframe,int istage){
+	
+
+	save_pg.beginDraw();
+	save_pg.clear();
+	save_pg.background(0);
+	// photo
+	save_pg.pushMatrix();
+		save_pg.translate(width,0);
+		save_pg.rotate(PI/2);
+		save_pg.translate(height,0);
+		save_pg.scale(-1,1);
+			save_pg.image(capture_cam,0,0);
+	save_pg.popMatrix();
+
+
+	// frame
+	PImage frame_image=loadImage("frame_"+nf(iframe+1,1)+".png");
+	save_pg.image(frame_image,0,0);
+
+	save_pg.endDraw();
+	
+	createQRcodeImage("hahaha");
+
+	saveImage();
+
+}
+
+void saveImage(){
+
+	println("Save Image!!");
+	save_pg.save("created/"+createUId()+".png");
+
+}
+

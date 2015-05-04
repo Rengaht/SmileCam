@@ -1,5 +1,8 @@
 final int MLOST_FRAME=3;
 
+
+
+
 class TrackedFace{
 	PVector position,sizee;
 	float cur_happy;
@@ -19,16 +22,26 @@ class TrackedFace{
 
 		pushMatrix();
 		translate(position.x,position.y);
-			if(cur_happy>0.2) image(happy_image,0,0);
-			else image(unhappy_image,0,0);
+			if(cur_happy>0.5) image(smile_image[2],0,0);
+			else if(cur_happy>0.2) image(smile_image[1],0,0);
+			else image(smile_image[0],0,0);
 
-			text(happy_score,0,0);
+			// text(happy_score,0,0);
+			if(DEBUG_MODE){
+				pushStyle();
+				stroke(255,0,0);
+				noFill();
+					rect(0,0,sizee.x,sizee.y);
+				popStyle();
+			}
 		popMatrix();
 	}
+
 	void updateHappyScore(float score){
 		cur_happy=score;
-		happy_score+=score;
+		// happy_score+=score;
 	}
+
 	void updateGeometry(PVector pos_,PVector sizee_){
 		if(pos_.x==0 && pos_.y==0){
 			mlost_track++;
@@ -36,13 +49,23 @@ class TrackedFace{
 		}else{
 			mlost_track=0;
 		}
-		position=pos_.get(); sizee=sizee_.get();
+		PVector scaled_pos=pos_.get();
+		scaled_pos.x*=Kinect_Scale.x;
+		scaled_pos.y*=Kinect_Scale.y;
+		
+		scaled_pos.add(Kinect_Position);
+		position=scaled_pos;
+
+		sizee=sizee_.get();
+		sizee.x*=Kinect_Scale.x;
+		sizee.y*=Kinect_Scale.y;
+		
+
 	}
 	
 	boolean hasLostTrack(){
 		return mlost_track>MLOST_FRAME;
 	}
-
 
 
 }
